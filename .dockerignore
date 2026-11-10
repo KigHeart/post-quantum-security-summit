@@ -1,0 +1,21 @@
+# Never copy credentials, delegate data or local runtime state into an image.
+.env
+.env.*
+!.env.example
+data/
+*.jsonl
+*.csv
+*.bak
+*.backup
+
+# Repository and local development files.
+.git/
+.github/
+.vscode/
+.idea/
+node_modules/
+coverage/
+.nyc_output/
+*.log
+.DS_Store
+Thumbs.db
