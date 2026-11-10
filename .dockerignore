@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 data/
+backups/
 *.jsonl
 *.csv
 *.bak
