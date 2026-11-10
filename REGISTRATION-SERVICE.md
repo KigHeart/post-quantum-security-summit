@@ -8,7 +8,7 @@ This is a first-party registration application maintained in this repository. It
 2. Copy `.env.example` to `.env` and set a unique organiser username and a random password of at least 32 characters.
 3. Leave `REGISTRATION_OPEN=0` while preparing the service. The form and API remain closed even when the server is healthy.
 4. Run `docker compose up -d --build summit`.
-5. Check `http://127.0.0.1:8080/api/health`; it should report `registrationOpen: false` until deliberately opened.
+5. Check `http://127.0.0.1:8080/api/health`; it should report `storage: ready` and `registrationOpen: false` until deliberately opened. If storage is not writable, health returns HTTP 503 and the container health check remains unhealthy.
 6. Open `http://127.0.0.1:8080/registration.html`.
 7. Open the organiser dashboard at `http://127.0.0.1:8080/admin`; the browser will challenge for the credentials in `.env`.
 
@@ -27,7 +27,7 @@ The dashboard is deliberately read-only. It does not approve delegates, send ema
 You need a Linux host that you control, a DNS name whose A/AAAA records point to that host, and inbound TCP ports 80 and 443 (plus UDP 443 for HTTP/3). This can be a University of Nairobi/C4D Lab-managed machine if the University authorises hosting and supplies the DNS/host access; the venue proposal itself does not establish that permission.
 
 1. Install Docker Engine and the Docker Compose plugin.
-2. Copy `.env.example` to `.env`. Set a long random `ADMIN_PASSWORD`, a non-default `ADMIN_USER`, and `PUBLIC_HOSTNAME` to the real DNS name.
+2. Copy `.env.example` to `.env`. Set a unique non-example `ADMIN_USER`, a random `ADMIN_PASSWORD` of at least 32 UTF-8 bytes, and `PUBLIC_HOSTNAME` to the real DNS name. The application refuses the example username or a short password; it also refuses to open registration without organiser credentials.
 3. Set `TRUST_PROXY=1`. The application port remains bound to host loopback; Caddy reaches it over the private Compose network.
 4. Confirm DNS points to the host and ports 80/443 are reachable.
 5. Keep `REGISTRATION_OPEN=0` and start the public stack: `docker compose --profile production up -d --build`.
