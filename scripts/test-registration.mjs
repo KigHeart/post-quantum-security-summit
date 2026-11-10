@@ -171,7 +171,7 @@ try {
 
   const stored = await readFile(join(dataDir, 'registrations.jsonl'), 'utf8');
   assert.equal(stored.trim().split('\n').length, 12);
-  const storedEntries = stored.trim().split('\\n').map(line => JSON.parse(line));
+  const storedEntries = stored.trim().split('\n').map(line => JSON.parse(line));
   const auditEntries = storedEntries.filter(entry => entry.type === 'status_change');
   assert.equal(auditEntries.length, 2);
   assert.equal(auditEntries[0].fromStatus, 'Pending review');
