@@ -17,7 +17,8 @@ const base = 'http://127.0.0.1:' + port;
 const proxy = ip => ({ 'x-forwarded-for': ip });
 const valid = (name = 'CI Test Delegate', email = 'ci@example.test') => ({
   fullName: name, email, organisation: 'Test Organisation', country: 'Kenya',
-  category: 'Academic / researcher', attendance: 'In person', consent: true, website: ''
+  category: 'Academic / researcher', attendance: 'In person', consent: true, website: '',
+  accessibility: 'Sensitive accessibility detail must not be persisted'
 });
 async function wait() {
   for (let i = 0; i < 60; i++) {
@@ -57,7 +58,6 @@ try {
   assert.equal(limited.headers.get('retry-after'), '3600');
   assert.equal((await post(valid('Second IP', 'second@example.test'), proxy('203.0.113.11'))).status, 201);
 
-  // Spreadsheet formula payloads must be exported as inert text.
   const formulaName = '=HYPERLINK("https://attacker.invalid","open")';
   assert.equal((await post(valid(formulaName, 'formula@example.test'), proxy('203.0.113.13'))).status, 201);
 
@@ -66,8 +66,30 @@ try {
     method: 'POST', headers: { 'content-type': 'application/json', ...proxy('203.0.113.12') }, body: oversized
   })).status, 400);
 
-  assert.equal((await fetch(base + '/admin/export.csv')).status, 401);
   const auth = 'Basic ' + Buffer.from('ci-admin:' + password).toString('base64');
+  assert.equal((await fetch(base + '/admin')).status, 401);
+  assert.equal((await fetch(base + '/admin/registrations.json')).status, 401);
+  assert.equal((await fetch(base + '/admin.html')).status, 404);
+
+  const dashboard = await fetch(base + '/admin', { headers: { authorization: auth } });
+  assert.equal(dashboard.status, 200);
+  assert.match(await dashboard.text(), /Delegate dashboard/);
+
+  const listResponse = await fetch(base + '/admin/registrations.json?limit=3', { headers: { authorization: auth } });
+  assert.equal(listResponse.status, 200);
+  const listing = await listResponse.json();
+  assert.equal(listing.total, 10);
+  assert.equal(listing.allCount, 10);
+  assert.equal(listing.registrations.length, 3);
+
+  const filteredResponse = await fetch(base + '/admin/registrations.json?q=Second%20IP', { headers: { authorization: auth } });
+  const filtered = await filteredResponse.json();
+  assert.equal(filtered.total, 1);
+  assert.equal(filtered.registrations[0].fullName, 'Second IP');
+
+  const badFilter = await fetch(base + '/admin/registrations.json?category=forged', { headers: { authorization: auth } });
+  assert.equal(badFilter.status, 400);
+
   const exported = await fetch(base + '/admin/export.csv', { headers: { authorization: auth } });
   assert.equal(exported.status, 200);
   const csv = await exported.text();
@@ -75,10 +97,13 @@ try {
   assert.match(csv, /Second IP/);
   assert.match(csv, /'=HYPERLINK/);
   assert.doesNotMatch(csv, /spam bot/);
+  assert.doesNotMatch(csv, /accessibility/);
+
   const stored = await readFile(join(dataDir, 'registrations.jsonl'), 'utf8');
   assert.equal(stored.trim().split('\n').length, 10);
+  assert.doesNotMatch(stored, /Sensitive accessibility detail/);
 
-  console.log('PASS: validation, allow-lists, bounded proxy-aware rate limiting, honeypot, body limits, CSV formula neutralisation, private persistence and authenticated export.');
+  console.log('PASS: validation, bounded abuse controls, CSV safety, authenticated organiser dashboard/list/export, pagination, filters and data minimisation.');
 } finally {
   child.kill('SIGTERM');
   await rm(dataDir, { recursive: true, force: true });
