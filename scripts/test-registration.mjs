@@ -105,6 +105,7 @@ try {
   assert.equal(listing.total, 10);
   assert.equal(listing.allCount, 10);
   assert.equal(listing.registrations.length, 3);
+  assert.equal(listing.statusCounts['Pending review'], 10);
 
   const filteredResponse = await fetch(base + '/admin/registrations.json?q=Second%20IP', { headers: { authorization: auth } });
   const filtered = await filteredResponse.json();
@@ -158,6 +159,12 @@ try {
   assert.equal(updated.registrations[0].statusHistory.length, 2);
   assert.equal(updated.registrations[0].statusHistory[0].actor, 'ci-admin');
   assert.equal(updated.registrations[0].statusHistory[0].note, 'Reviewed by CI test');
+  assert.equal(updated.statusCounts['Pending review'], 9);
+  assert.equal(updated.statusCounts.Waitlisted, 1);
+  const statusFiltered = await fetch(base + '/admin/registrations.json?status=Waitlisted', { headers: { authorization: auth } });
+  assert.equal((await statusFiltered.json()).total, 1);
+  const invalidStatusFilter = await fetch(base + '/admin/registrations.json?status=Paid', { headers: { authorization: auth } });
+  assert.equal(invalidStatusFilter.status, 400);
 
   const exported = await fetch(base + '/admin/export.csv', { headers: { authorization: auth } });
   assert.equal(exported.status, 200);
