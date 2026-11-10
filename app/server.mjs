@@ -11,6 +11,7 @@ const PORT = Number(process.env.PORT || 8080);
 const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
+const REGISTRATION_OPEN = process.env.REGISTRATION_OPEN === '1';
 const MAX_BODY = 16 * 1024;
 const MAX_RATE_KEYS = 5000;
 const rate = new Map();
@@ -120,10 +121,11 @@ const server = http.createServer(async (req, res) => {
   catch { return json(res, 400, { error: 'Invalid request URL.' }); }
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    return json(res, 200, { ok: true, service: 'summit-registration', storage: 'local' });
+    return json(res, 200, { ok: true, service: 'summit-registration', storage: 'local', registrationOpen: REGISTRATION_OPEN });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/registrations') {
+    if (!REGISTRATION_OPEN) return json(res, 503, { error: 'Registration has not yet been opened by the organisers.' });
     if (limited(req)) {
       res.setHeader('Retry-After', '3600');
       return json(res, 429, { error: 'Too many attempts. Please try again later.' });
