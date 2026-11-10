@@ -4,13 +4,35 @@ services:
     container_name: summit-registration
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       PORT: 8080
       DATA_DIR: /data
+      TRUST_PROXY: ${TRUST_PROXY:-0}
       ADMIN_USER: ${ADMIN_USER:?Set ADMIN_USER in .env}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
     volumes:
       - summit_registrations:/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: summit-caddy
+    restart: unless-stopped
+    profiles: ["production"]
+    depends_on:
+      - summit
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:?Set PUBLIC_HOSTNAME in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
 volumes:
   summit_registrations:
+  caddy_data:
+  caddy_config:
