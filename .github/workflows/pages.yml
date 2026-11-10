@@ -23,6 +23,8 @@ jobs:
           node-version: 22
       - name: Validate pages and local references
         run: node scripts/check-site.mjs
+      - name: Test self-hosted registration API
+        run: node scripts/test-registration.mjs
 
   deploy:
     name: Deploy to GitHub Pages
