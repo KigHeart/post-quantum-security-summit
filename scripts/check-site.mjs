@@ -5,7 +5,7 @@ const root = process.cwd();
 const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
 const requiredAssets = ["styles.css", "refinements.css", "inner-pages.css", "script.js"];
 const requiredDocs = ["LAUNCH-CHECKLIST.md"];
-const externalAssetPattern = /fonts\\.(?:googleapis|gstatic)\\.com|images\\.unsplash\\.com|googletagmanager|google-analytics|connect\\.facebook\\.net/i;
+const externalAssetPattern = /fonts\.(?:googleapis|gstatic)\.com|images\.unsplash\.com|googletagmanager|google-analytics|connect\.facebook\.net/i;
 const errors = [];
 
 for (const file of [...pages, ...requiredAssets, ...requiredDocs]) {
