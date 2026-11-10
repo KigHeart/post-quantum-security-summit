@@ -8,7 +8,7 @@ const dataDir = await mkdtemp(join(tmpdir(), 'summit-reg-'));
 const port = 18000 + Math.floor(Math.random() * 10000);
 const password = 'ci-test-password-that-is-long-enough';
 const env = { ...process.env, PORT: String(port), DATA_DIR: dataDir, TRUST_PROXY: '1',
-  ADMIN_USER: 'ci-admin', ADMIN_PASSWORD: password };
+  ADMIN_USER: 'ci-admin', ADMIN_PASSWORD: password, REGISTRATION_OPEN: '1' };
 const child = spawn(process.execPath, ['app/server.mjs'], { env, stdio: ['ignore', 'pipe', 'pipe'] });
 let logs = '';
 child.stdout.on('data', chunk => logs += chunk);
@@ -38,6 +38,7 @@ try {
   await wait();
   const health = await (await fetch(base + '/api/health')).json();
   assert.equal(health.ok, true);
+  assert.equal(health.registrationOpen, true);
 
   assert.equal((await fetch(base + '/api/registrations', { method: 'POST', body: 'x' })).status, 415);
   assert.equal((await fetch(base + '/api/registrations', {
@@ -103,7 +104,42 @@ try {
   assert.equal(stored.trim().split('\n').length, 10);
   assert.doesNotMatch(stored, /Sensitive accessibility detail/);
 
-  console.log('PASS: validation, bounded abuse controls, CSV safety, authenticated organiser dashboard/list/export, pagination, filters and data minimisation.');
+
+  // A deployed server must remain closed unless the organiser explicitly opens it.
+  const closedDataDir = await mkdtemp(join(tmpdir(), 'summit-reg-closed-'));
+  const closedPort = 18000 + Math.floor(Math.random() * 10000);
+  const closedBase = 'http://127.0.0.1:' + closedPort;
+  const closedChild = spawn(process.execPath, ['app/server.mjs'], {
+    env: { ...env, PORT: String(closedPort), DATA_DIR: closedDataDir, REGISTRATION_OPEN: '0' },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let closedLogs = '';
+  closedChild.stdout.on('data', chunk => closedLogs += chunk);
+  closedChild.stderr.on('data', chunk => closedLogs += chunk);
+  try {
+    let ready = false;
+    for (let i = 0; i < 60; i++) {
+      if (closedChild.exitCode !== null) throw Error('Closed server exited: ' + closedLogs);
+      try {
+        const response = await fetch(closedBase + '/api/health');
+        if (response.ok) { ready = true; break; }
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    assert.equal(ready, true, 'Closed server did not become ready: ' + closedLogs);
+    const closedHealth = await (await fetch(closedBase + '/api/health')).json();
+    assert.equal(closedHealth.registrationOpen, false);
+    const rejected = await fetch(closedBase + '/api/registrations', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(valid())
+    });
+    assert.equal(rejected.status, 503);
+    await assert.rejects(readFile(join(closedDataDir, 'registrations.jsonl')), { code: 'ENOENT' });
+  } finally {
+    closedChild.kill('SIGTERM');
+    await rm(closedDataDir, { recursive: true, force: true });
+  }
+
+  console.log('PASS: validation, explicit registration release gate, bounded abuse controls, CSV safety, authenticated organiser dashboard/list/export, pagination, filters and data minimisation.');
 } finally {
   child.kill('SIGTERM');
   await rm(dataDir, { recursive: true, force: true });
