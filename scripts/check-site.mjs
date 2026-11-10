@@ -4,9 +4,10 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
 const requiredAssets = ["styles.css", "refinements.css", "inner-pages.css", "script.js"];
+const requiredDocs = ["LAUNCH-CHECKLIST.md"];
 const errors = [];
 
-for (const file of [...pages, ...requiredAssets]) {
+for (const file of [...pages, ...requiredAssets, ...requiredDocs]) {
   if (!existsSync(resolve(root, file))) errors.push(`Missing required file: ${file}`);
 }
 for (const page of pages) {
@@ -27,5 +28,5 @@ if (errors.length) {
   for (const error of errors) console.error(`FAIL: ${error}`);
   process.exitCode = 1;
 } else {
-  console.log(`PASS: ${pages.length} pages and ${requiredAssets.length} shared assets are present; local references resolve.`);
+  console.log(`PASS: ${pages.length} pages, ${requiredAssets.length} shared assets and ${requiredDocs.length} launch documents are present; local references resolve.`);
 }
