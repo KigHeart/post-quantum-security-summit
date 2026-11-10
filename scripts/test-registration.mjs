@@ -62,6 +62,11 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.storage, 'ready');
   assert.equal(health.registrationOpen, true);
+  const publicPage = await fetch(base + '/registration.html');
+  const csp = publicPage.headers.get('content-security-policy') || '';
+  assert.match(csp, /default-src 'self'/);
+  assert.match(csp, /object-src 'none'/);
+  assert.doesNotMatch(csp, /fonts\.(?:googleapis|gstatic)/);
 
   assert.equal((await fetch(base + '/api/registrations', { method: 'POST', body: 'x' })).status, 415);
   assert.equal((await fetch(base + '/api/registrations', {
