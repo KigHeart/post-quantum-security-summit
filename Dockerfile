@@ -4,7 +4,7 @@ RUN addgroup -S app && adduser -S app -G app \
     && mkdir -p /app/app /data \
     && chown -R app:app /app /data
 WORKDIR /app
-COPY --chown=app:app index.html programme.html sponsors.html registration.html ./
+COPY --chown=app:app index.html programme.html sponsors.html registration.html privacy.html ./
 COPY --chown=app:app styles.css refinements.css inner-pages.css script.js ./
 COPY --chown=app:app app/server.mjs ./app/server.mjs
 USER app
