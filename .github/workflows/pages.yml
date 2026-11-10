@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   validate:
-    name: Static site checks
+    name: Static site and registration checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -25,9 +25,11 @@ jobs:
         run: node scripts/check-site.mjs
       - name: Test self-hosted registration API
         run: node scripts/test-registration.mjs
+      - name: Build production container
+        run: docker build --tag summit-registration:ci .
 
   deploy:
-    name: Deploy to GitHub Pages
+    name: Deploy static information site to GitHub Pages
     if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
