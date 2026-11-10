@@ -278,7 +278,7 @@ const server = http.createServer(async (req, res) => {
     const category = clean(url.searchParams.get('category'), 80);
     const status = clean(url.searchParams.get('status'), 60);
     if (category && !CATEGORIES.has(category)) return json(res, 400, { error: 'Invalid category filter.' });
-    if (status && status !== 'Pending review') return json(res, 400, { error: 'Invalid status filter.' });
+    if (status && !STATUSES.has(status)) return json(res, 400, { error: 'Invalid status filter.' });
     const parsedLimit = Number.parseInt(url.searchParams.get('limit') || '25', 10);
     const parsedOffset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
     const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 25;
@@ -292,11 +292,12 @@ const server = http.createServer(async (req, res) => {
         return ['fullName', 'email', 'phone', 'organisation', 'jobTitle', 'country', 'category', 'attendance', 'interests']
           .some(key => String(row[key] || '').toLowerCase().includes(q));
       });
+      const statusCounts = Object.fromEntries([...STATUSES].map(value => [value, allRows.filter(row => row.status === value).length]));
       const fields = ['id', 'receivedAt', 'status', 'statusHistory', 'fullName', 'email', 'phone', 'organisation',
         'jobTitle', 'country', 'category', 'attendance', 'interests'];
       const registrations = filtered.slice(offset, offset + limit).map(row =>
         Object.fromEntries(fields.map(key => [key, row[key] ?? ''])));
-      return json(res, 200, { ok: true, total: filtered.length, allCount: allRows.length, limit, offset, registrations });
+      return json(res, 200, { ok: true, total: filtered.length, allCount: allRows.length, statusCounts, limit, offset, registrations });
     } catch {
       return json(res, 500, { error: 'Could not read registrations.' });
     }
