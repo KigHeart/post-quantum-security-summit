@@ -25,6 +25,8 @@ jobs:
         run: node scripts/check-site.mjs
       - name: Test self-hosted registration API
         run: node scripts/test-registration.mjs
+      - name: Test registration-store backup verification
+        run: node scripts/test-registration-backup.mjs
       - name: Build production container
         run: docker build --tag summit-registration:ci .
 
