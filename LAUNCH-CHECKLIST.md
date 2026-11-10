@@ -45,6 +45,8 @@ Run these tests on a local or access-restricted staging instance, not on the pub
 - [ ] Temporarily set `REGISTRATION_OPEN=1` in staging and recreate the service.
 - [ ] Submit a clearly labelled test delegate; confirm the pending-review reference is returned.
 - [ ] Confirm the record appears only after organiser authentication at `/admin`.
+- [ ] Change a staging record through Pending review → Accepted → Waitlisted; verify the actor, timestamps, prior/new states and notes appear in the audit history.
+- [ ] Confirm status changes do not send email or imply a confirmed paid booking; test the organiser's manual communication procedure.
 - [ ] Test dashboard search, category filtering, pagination and authenticated CSV export.
 - [ ] Confirm CSV formula payloads are exported as inert text.
 - [ ] Run the backup verifier and complete a restore drill; verify the restored record count and contents.
