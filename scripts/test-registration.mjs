@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
@@ -38,6 +38,7 @@ try {
   await wait();
   const health = await (await fetch(base + '/api/health')).json();
   assert.equal(health.ok, true);
+  assert.equal(health.storage, 'ready');
   assert.equal(health.registrationOpen, true);
 
   assert.equal((await fetch(base + '/api/registrations', { method: 'POST', body: 'x' })).status, 415);
@@ -129,6 +130,7 @@ try {
     assert.equal(ready, true, 'Closed server did not become ready: ' + closedLogs);
     const closedHealth = await (await fetch(closedBase + '/api/health')).json();
     assert.equal(closedHealth.registrationOpen, false);
+    assert.equal(closedHealth.storage, 'ready');
     const rejected = await fetch(closedBase + '/api/registrations', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(valid())
     });
@@ -139,7 +141,43 @@ try {
     await rm(closedDataDir, { recursive: true, force: true });
   }
 
-  console.log('PASS: validation, explicit registration release gate, bounded abuse controls, CSV safety, authenticated organiser dashboard/list/export, pagination, filters and data minimisation.');
+
+  // A healthy process must not advertise readiness when its data path is not writable.
+  const blockedRoot = await mkdtemp(join(tmpdir(), 'summit-reg-storage-'));
+  const blockedPath = join(blockedRoot, 'not-a-directory');
+  await writeFile(blockedPath, 'file blocks directory creation');
+  const blockedPort = 18000 + Math.floor(Math.random() * 10000);
+  const blockedBase = 'http://127.0.0.1:' + blockedPort;
+  const blockedChild = spawn(process.execPath, ['app/server.mjs'], {
+    env: { ...env, PORT: String(blockedPort), DATA_DIR: blockedPath, REGISTRATION_OPEN: '0' },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let blockedLogs = '';
+  blockedChild.stdout.on('data', chunk => blockedLogs += chunk);
+  blockedChild.stderr.on('data', chunk => blockedLogs += chunk);
+  try {
+    let unavailable = false;
+    for (let i = 0; i < 60; i++) {
+      if (blockedChild.exitCode !== null) throw Error('Storage-probe server exited: ' + blockedLogs);
+      try {
+        const response = await fetch(blockedBase + '/api/health');
+        if (response.status === 503) {
+          const result = await response.json();
+          assert.equal(result.ok, false);
+          assert.equal(result.storage, 'unavailable');
+          unavailable = true;
+          break;
+        }
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    assert.equal(unavailable, true, 'Server did not report unavailable storage.');
+  } finally {
+    blockedChild.kill('SIGTERM');
+    await rm(blockedRoot, { recursive: true, force: true });
+  }
+
+  console.log('PASS: storage readiness, explicit release gate, validation, bounded abuse controls, CSV safety, authenticated dashboard, pagination, filters and data minimisation.');
 } finally {
   child.kill('SIGTERM');
   await rm(dataDir, { recursive: true, force: true });
