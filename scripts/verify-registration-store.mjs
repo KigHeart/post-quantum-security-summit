@@ -40,7 +40,7 @@ try {
         && typeof record.actor === 'string' && record.actor.trim()
         && statuses.has(record.fromStatus) && statuses.has(record.toStatus)
         && (record.note === undefined || typeof record.note === 'string');
-      if (!validEvent || eventIds.has(record.id) || !registrationIds.has(record.registrationId)
+      if (!validEvent || eventIds.has(record.id) || registrationIds.has(record.id) || !registrationIds.has(record.registrationId)
         || currentStatuses.get(record.registrationId) !== record.fromStatus) {
         console.error(`Invalid or inconsistent status audit event at line ${lineNumber}.`);
         invalid = true;
