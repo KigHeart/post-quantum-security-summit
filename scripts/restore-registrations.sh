@@ -15,7 +15,8 @@ BACKUP="$(cd "$(dirname "$BACKUP")" && pwd)/$(basename "$BACKUP")"
 node "$ROOT/scripts/verify-registration-store.mjs" "$BACKUP"
 
 # Preserve the current store before replacing it.
-bash "$ROOT/scripts/backup-registrations.sh" "$ROOT/backups/pre-restore"
+PRE_RESTORE_DIR="${PRE_RESTORE_BACKUP_DIR:-$ROOT/backups/pre-restore}"
+bash "$ROOT/scripts/backup-registrations.sh" "$PRE_RESTORE_DIR"
 
 RESTART=0
 TMP_CHECK="$(mktemp)"
