@@ -50,7 +50,7 @@ The form submits to the self-hosted API. The API stores delegate expressions of 
 
 The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents, medical diagnoses or other sensitive personal information.
 
-The privacy notice is a draft and explicitly lists the organiser, hosting, retention and regulatory matters that must be confirmed before public collection begins. It is not a legal opinion or a certification of compliance. The form remains unavailable until the self-hosted backend is deployed and the organiser completes the launch checklist.
+The privacy notice is a draft and explicitly lists the organiser, hosting, retention and regulatory matters that must be confirmed before public collection begins. It is not a legal opinion or a certification of compliance. The registration API and form are closed by default. Deployment does not open submissions: the organiser must explicitly set `REGISTRATION_OPEN=1` only after the launch checklist is complete. The privacy notice remains a draft until those details are approved.
 
 Registration enquiries and privacy questions: **YEQOEN@OTULOOK.COM**.
 
