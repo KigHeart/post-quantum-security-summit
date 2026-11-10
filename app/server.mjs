@@ -24,6 +24,7 @@ http.createServer(async(req,res)=>{const url=new URL(req.url,'http://localhost')
   if(limited(req))return json(res,429,{error:'Too many attempts. Please try again later.'});
   if(!req.headers['content-type']?.includes('application/json'))return json(res,415,{error:'Expected JSON submission.'});
   let d;try{d=await body(req);}catch(e){return json(res,400,{error:e.message==='Request too large'?'Request too large.':'Invalid submission.'});}
+  if(!d||typeof d!=='object'||Array.isArray(d))return json(res,400,{error:'Invalid submission.'});
   if(clean(d.website,200))return json(res,200,{ok:true});
   const r={id:randomUUID(),receivedAt:new Date().toISOString(),status:'Pending review',fullName:clean(d.fullName,120),email:clean(d.email,254),phone:clean(d.phone,40),organisation:clean(d.organisation,160),jobTitle:clean(d.jobTitle,120),country:clean(d.country,100),category:clean(d.category,80),attendance:clean(d.attendance,60),interests:clean(d.interests,2000),accessibility:clean(d.accessibility,1000),consent:d.consent===true};
   if(!r.fullName||!/^\S+@\S+\.\S+$/.test(r.email)||!r.organisation||!r.country||!r.category||!r.attendance||!r.consent)return json(res,422,{error:'Please complete all required fields and consent.'});
