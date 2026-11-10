@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -33,6 +33,28 @@ async function post(data, headers = {}) {
     method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(data)
   });
 }
+
+// Startup must fail closed on weak/default credentials or unauthenticated public collection.
+const weakCredentials = spawnSync(process.execPath, ['app/server.mjs'], {
+  env: { ...env, PORT: String(port + 1), ADMIN_USER: 'ci-admin', ADMIN_PASSWORD: 'short', REGISTRATION_OPEN: '0' },
+  encoding: 'utf8'
+});
+assert.equal(weakCredentials.status, 1);
+assert.match(weakCredentials.stderr, /at least 32 UTF-8 bytes/);
+
+const exampleCredentials = spawnSync(process.execPath, ['app/server.mjs'], {
+  env: { ...env, PORT: String(port + 2), ADMIN_USER: 'summit-admin', ADMIN_PASSWORD: password, REGISTRATION_OPEN: '0' },
+  encoding: 'utf8'
+});
+assert.equal(exampleCredentials.status, 1);
+assert.match(exampleCredentials.stderr, /example organiser username/);
+
+const noOrganiserAuth = spawnSync(process.execPath, ['app/server.mjs'], {
+  env: { ...env, PORT: String(port + 3), ADMIN_USER: '', ADMIN_PASSWORD: '', REGISTRATION_OPEN: '1' },
+  encoding: 'utf8'
+});
+assert.equal(noOrganiserAuth.status, 1);
+assert.match(noOrganiserAuth.stderr, /without organiser authentication/);
 
 try {
   await wait();
