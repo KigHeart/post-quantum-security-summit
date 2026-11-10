@@ -21,6 +21,12 @@ const valid = {
   consent: true
 };
 function run(file) { return spawnSync(process.execPath, [verifier.pathname, file], { encoding: 'utf8' }); }
+const auditEvent = {
+  type: 'status_change', id: '33333333-3333-4333-8333-333333333333',
+  registrationId: valid.id, changedAt: '2026-11-10T12:30:00.000Z',
+  actor: 'ci-admin', fromStatus: 'Pending review', toStatus: 'Accepted', note: 'Approved in test'
+};
+const originalStore = JSON.stringify(valid) + '\n' + JSON.stringify(auditEvent) + '\n';
 
 try {
   const good = join(dir, 'good.jsonl');
@@ -40,6 +46,10 @@ try {
   const duplicate = join(dir, 'duplicate.jsonl');
   await writeFile(duplicate, JSON.stringify(valid) + '\n' + JSON.stringify(valid) + '\n');
   assert.notEqual(run(duplicate).status, 0);
+
+  const orphanEvent = join(dir, 'orphan-event.jsonl');
+  await writeFile(orphanEvent, JSON.stringify({ ...auditEvent, registrationId: '99999999-9999-4999-8999-999999999999' }) + '\\n');
+  assert.notEqual(run(orphanEvent).status, 0);
 
   const invalidRecord = join(dir, 'invalid.jsonl');
   await writeFile(invalidRecord, JSON.stringify({ ...valid, consent: false }) + '\n');
