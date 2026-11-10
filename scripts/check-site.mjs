@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = process.cwd();
-const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html"];
+const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
 const requiredAssets = ["styles.css", "refinements.css", "inner-pages.css", "script.js"];
 const errors = [];
 
