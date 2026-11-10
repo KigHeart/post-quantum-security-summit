@@ -47,8 +47,11 @@
 <script>
 (() => {
  const form=document.getElementById('delegate-form'),status=document.getElementById('form-status'),button=document.getElementById('submit-button');
+ let serviceReady=false;
+ button.disabled=true;button.textContent='Checking registration service…';
+ fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(!d.ok)throw Error();serviceReady=true;button.disabled=false;button.textContent='Submit expression of interest';}).catch(()=>{status.className='reg-status error';status.textContent='The online registration service has not yet been deployed at this website. Please email YEQOEN@OTULOOK.COM to register your interest.';button.textContent='Online form not yet active';});
  form.addEventListener('submit',async e=>{
-  e.preventDefault();status.className='reg-status';status.textContent='';
+  e.preventDefault();if(!serviceReady)return;status.className='reg-status';status.textContent='';
   if(!form.reportValidity())return;
   const data=Object.fromEntries(new FormData(form).entries());
   data.consent=document.getElementById('consent').checked;
