@@ -9,8 +9,15 @@ This is a first-party registration application maintained in this repository. It
 3. Run `docker compose up -d --build summit`.
 4. Open `http://127.0.0.1:8080/registration.html`.
 5. Check `http://127.0.0.1:8080/api/health`.
+6. Open the organiser dashboard at `http://127.0.0.1:8080/admin`; the browser will challenge for the credentials in `.env`.
 
 The app binds its host port to loopback only. Delegate records are stored in the persistent Docker volume `/data/registrations.jsonl`. Restarting the container does not remove records.
+
+## Organiser dashboard and export
+
+The `/admin` route is protected by HTTP Basic Authentication and serves the read-only organiser dashboard only after successful authentication. The dashboard supports search across delegate contact and organisation fields, category filtering, pagination and CSV export. Its data API at `/admin/registrations.json` independently enforces the same authentication. Direct requests for `/admin.html` are blocked so the dashboard file cannot be fetched without the protected route.
+
+The dashboard is deliberately read-only. It does not approve delegates, send email, assign fees, issue tickets or confirm attendance. These workflows require separately designed audit and notification controls. The export route is also authenticated. Use HTTPS for any access beyond loopback.
 
 ## Public HTTPS deployment
 
@@ -22,17 +29,13 @@ You need a Linux host that you control, a DNS name whose A/AAAA records point to
 4. Confirm DNS points to the host and ports 80/443 are reachable.
 5. Start the public stack: `docker compose --profile production up -d --build`.
 6. Check `https://YOUR-HOSTNAME/api/health`. Caddy obtains and renews the TLS certificate automatically.
-7. Open `https://YOUR-HOSTNAME/registration.html` and submit a clearly labelled internal test record. Verify it appears in the organiser export, then remove the test record from the data volume before opening registration.
+7. Open `https://YOUR-HOSTNAME/registration.html` and submit a clearly labelled internal test record. Verify it appears in the organiser dashboard and export, then remove the test record from the data volume before opening registration.
 
-Do not expose port 8080 publicly. Do not run the admin export over plain HTTP. Keep `.env`, the data volume and backups private. Restrict host access, apply OS and Docker security updates, and back up `summit_registrations` to encrypted storage under organiser control.
-
-## Organiser export
-
-Open `/admin/export.csv` on the HTTPS site. Use the HTTP Basic Authentication credentials from `.env`. The endpoint does not list registrations without authentication. Store the password in a password manager; do not put it in this repository or send it by email.
+Do not expose port 8080 publicly. Do not run the admin dashboard or export over plain HTTP. Keep `.env`, the data volume and backups private. Restrict host access, apply OS and Docker security updates, and back up `summit_registrations` to encrypted storage under organiser control.
 
 ## Backup, verification and restore
 
-Registration files contain personal data. Backups must be stored outside Git, protected by filesystem permissions, encrypted when moved off the host, and accessible only to authorised organisers. The repository's `.dockerignore` excludes the local `backups/` directory from production images.
+Registration files contain personal data. Backups must be stored outside Git, protected by filesystem permissions, encrypted when moved off-host, and accessible only to authorised organisers. The repository's `.dockerignore` excludes the local `backups/` directory from production images.
 
 Create a verified backup:
 
@@ -59,12 +62,14 @@ The restore script refuses to run without the explicit confirmation variable, ve
 ## Application safeguards
 
 - Server-side field validation, fixed category/attendance allow-lists and explicit consent.
-- Request-size limit, honeypot and per-client rate limiting.
+- Request-size limit, honeypot and bounded per-client rate limiting.
 - Proxy-aware client identification is disabled by default and enabled only for the bundled reverse-proxy deployment.
 - Random submission reference and pending-review status.
 - Private append-only JSONL storage and authenticated CSV export.
+- Authenticated read-only organiser dashboard with search, filtering and pagination.
 - CSV formula neutralisation for spreadsheet exports.
 - Offline JSONL integrity verification and guarded backup/restore scripts.
+- The API does not persist the former free-text accessibility/dietary field; contact the organiser separately for necessary arrangements.
 - No payment details, identity documents, passwords or sensitive files collected.
 - The rate limiter is a baseline abuse control, not DDoS protection. Public deployment still needs host-level firewalling, monitoring, updates and backups.
 

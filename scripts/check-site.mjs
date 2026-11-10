@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = process.cwd();
-const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html"];
+const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
 const requiredAssets = ["styles.css", "refinements.css", "inner-pages.css", "script.js"];
 const errors = [];
 
@@ -17,7 +17,9 @@ for (const page of pages) {
   if (!/<meta name="viewport"/i.test(html)) errors.push(`${page}: missing viewport metadata`);
   for (const href of [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1])) {
     if (/^(https?:|mailto:|tel:|#|data:)/i.test(href)) continue;
-    const local = href.split("#")[0].split("?")[0];
+    // The organiser routes are application endpoints, not files in the static source tree.
+    if (href.startsWith("/admin/")) continue;
+    const local = (href.startsWith("/") ? href.slice(1) : href).split("#")[0].split("?")[0];
     if (local && !existsSync(resolve(root, local))) errors.push(`${page}: broken local reference ${href}`);
   }
 }

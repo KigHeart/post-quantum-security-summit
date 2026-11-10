@@ -19,10 +19,11 @@ The venue, programme, speakers, registration terms and fees remain provisional u
 - `sponsors.html` — partnership overview
 - `registration.html` — delegate expression-of-interest form
 - `privacy.html` — draft privacy notice and pre-launch disclosures
+- `admin.html` — authenticated, read-only organiser dashboard (served only through `/admin`)
 - `app/server.mjs` — dependency-free Node.js registration API and static site server
 - `Dockerfile`, `docker-compose.yml` — portable self-hosted deployment
 - `scripts/check-site.mjs` — dependency-free static-site checks
-- `scripts/test-registration.mjs` — registration API integration test
+- `scripts/test-registration.mjs` — registration API and organiser dashboard integration test
 - `.github/workflows/pages.yml` — GitHub Actions validation and static preview deployment
 
 ## Local preview
@@ -41,11 +42,11 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://localhost:8080/registration.html`. Check service health at `/api/health`.
+Open `http://localhost:8080/registration.html`. Check service health at `/api/health`. Open the organiser dashboard at `http://127.0.0.1:8080/admin`; the browser will request the organiser credentials from `.env`.
 
 ## Registration and data handling
 
-The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can download a CSV through the authenticated `/admin/export.csv` endpoint. No public endpoint exposes the delegate list.
+The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can review records in the authenticated read-only dashboard at `/admin` and download a CSV through `/admin/export.csv`. The dashboard supports search, category filtering and pagination; it does not approve or confirm attendance.
 
 The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents, medical diagnoses or other sensitive personal information.
 
@@ -66,6 +67,7 @@ Run:
 ```sh
 node scripts/check-site.mjs
 node scripts/test-registration.mjs
+node scripts/test-registration-backup.mjs
 ```
 
 ## Maintainer
