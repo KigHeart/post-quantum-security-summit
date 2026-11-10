@@ -12,7 +12,9 @@ const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const MAX_BODY = 16 * 1024;
+const MAX_RATE_KEYS = 5000;
 const rate = new Map();
+let rateChecks = 0;
 const CATEGORIES = new Set([
   'Industry / datacentre professional', 'Government / public sector',
   'Academic / researcher', 'Student', 'Speaker / invited guest',
@@ -38,7 +40,13 @@ function json(res, status, obj) { send(res, status, JSON.stringify(obj)); }
 function clean(v, max) {
   return typeof v === 'string' ? v.trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max) : '';
 }
-function csv(v) { return '"' + String(v ?? '').replace(/"/g, '""') + '"'; }
+function csv(v) {
+  const value = String(v ?? '');
+  // Spreadsheet programs may execute cells beginning with formula operators.
+  // Prefix an apostrophe after any leading whitespace to force text treatment.
+  const safe = /^[\s]*[=+\-@]/.test(value) ? "'" + value : value;
+  return '"' + safe.replace(/"/g, '""') + '"';
+}
 function authorized(req) {
   if (!ADMIN_USER || !ADMIN_PASSWORD) return false;
   const h = req.headers.authorization || '';
@@ -75,9 +83,26 @@ function clientIp(req) {
 }
 function limited(req) {
   const ip = clientIp(req), now = Date.now();
+
+  // Periodically discard expired clients so abandoned IPs cannot grow memory forever.
+  if ((++rateChecks & 255) === 0) {
+    for (const [key, timestamps] of rate) {
+      const active = timestamps.filter(t => now - t < 3600000);
+      if (active.length) rate.set(key, active);
+      else rate.delete(key);
+    }
+  }
+
   const recent = (rate.get(ip) || []).filter(t => now - t < 3600000);
   if (recent.length >= 8) { rate.set(ip, recent); return true; }
-  recent.push(now); rate.set(ip, recent);
+  recent.push(now);
+
+  // Keep the in-memory limiter bounded even during high-cardinality abuse.
+  if (!rate.has(ip) && rate.size >= MAX_RATE_KEYS) {
+    const oldest = rate.keys().next().value;
+    if (oldest !== undefined) rate.delete(oldest);
+  }
+  rate.set(ip, recent);
   return false;
 }
 
@@ -91,7 +116,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && url.pathname === '/api/registrations') {
-    if (limited(req)) return json(res, 429, { error: 'Too many attempts. Please try again later.' });
+    if (limited(req)) {
+      res.setHeader('Retry-After', '3600');
+      return json(res, 429, { error: 'Too many attempts. Please try again later.' });
+    }
     if (!req.headers['content-type']?.toLowerCase().includes('application/json')) {
       return json(res, 415, { error: 'Expected JSON submission.' });
     }
