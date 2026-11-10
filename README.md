@@ -18,6 +18,7 @@ The venue, programme, speakers, registration terms and fees remain provisional u
 - `programme.html` — proposed four-day programme framework
 - `sponsors.html` — partnership overview
 - `registration.html` — delegate expression-of-interest form
+- `privacy.html` — draft privacy notice and pre-launch disclosures
 - `app/server.mjs` — dependency-free Node.js registration API and static site server
 - `Dockerfile`, `docker-compose.yml` — portable self-hosted deployment
 - `scripts/check-site.mjs` — dependency-free static-site checks
@@ -46,7 +47,9 @@ Open `http://localhost:8080/registration.html`. Check service health at `/api/he
 
 The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can download a CSV through the authenticated `/admin/export.csv` endpoint. No public endpoint exposes the delegate list.
 
-The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents or other sensitive personal information.
+The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents, medical diagnoses or other sensitive personal information.
+
+The privacy notice is a draft and explicitly lists the organiser, hosting, retention and regulatory matters that must be confirmed before public collection begins. It is not a legal opinion or a certification of compliance. The form remains unavailable until the self-hosted backend is deployed and the organiser completes the launch checklist.
 
 Registration enquiries and privacy questions: **YEQOEN@OTULOOK.COM**.
 
