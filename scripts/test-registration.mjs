@@ -52,8 +52,14 @@ try {
     const response = await post(valid('Rate Test ' + i, 'rate' + i + '@example.test'), proxy('203.0.113.10'));
     assert.equal(response.status, 201);
   }
-  assert.equal((await post(valid(), proxy('203.0.113.10'))).status, 429);
+  const limited = await post(valid(), proxy('203.0.113.10'));
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get('retry-after'), '3600');
   assert.equal((await post(valid('Second IP', 'second@example.test'), proxy('203.0.113.11'))).status, 201);
+
+  // Spreadsheet formula payloads must be exported as inert text.
+  const formulaName = '=HYPERLINK("https://attacker.invalid","open")';
+  assert.equal((await post(valid(formulaName, 'formula@example.test'), proxy('203.0.113.13'))).status, 201);
 
   const oversized = JSON.stringify({ ...valid(), interests: 'x'.repeat(17000) });
   assert.equal((await fetch(base + '/api/registrations', {
@@ -67,11 +73,12 @@ try {
   const csv = await exported.text();
   assert.match(csv, /Rate Test 0/);
   assert.match(csv, /Second IP/);
+  assert.match(csv, /'=HYPERLINK/);
   assert.doesNotMatch(csv, /spam bot/);
   const stored = await readFile(join(dataDir, 'registrations.jsonl'), 'utf8');
-  assert.equal(stored.trim().split('\n').length, 9);
+  assert.equal(stored.trim().split('\n').length, 10);
 
-  console.log('PASS: validation, allow-lists, proxy-aware rate limiting, honeypot, body limits, private persistence and authenticated export.');
+  console.log('PASS: validation, allow-lists, bounded proxy-aware rate limiting, honeypot, body limits, CSV formula neutralisation, private persistence and authenticated export.');
 } finally {
   child.kill('SIGTERM');
   await rm(dataDir, { recursive: true, force: true });
