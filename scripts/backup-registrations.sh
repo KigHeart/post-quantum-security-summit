@@ -13,7 +13,7 @@ RESTART=0
 cleanup() {
   local code=$?
   if [[ "$RESTART" == "1" ]]; then docker compose start summit >/dev/null || true; fi
-  rm -f "$TMP"
+  if [[ -n "$TMP" ]]; then rm -f "$TMP"; fi
   exit "$code"
 }
 trap cleanup EXIT
@@ -30,5 +30,5 @@ docker compose run --rm --no-deps -T --entrypoint sh summit -c \
 node "$ROOT/scripts/verify-registration-store.mjs" "$TMP"
 chmod 600 "$TMP"
 mv "$TMP" "$TARGET"
-TMP="$TARGET"
+TMP=""
 echo "Backup created: $TARGET"
