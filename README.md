@@ -1,6 +1,6 @@
 # Quantum-Resistant Cryptography for Datacentres Summit
 
-Official event information website maintained for Tilil Engineering Group.
+Official event information and delegate expression-of-interest platform maintained by Tilil Engineering Group.
 
 ## Event overview
 
@@ -10,45 +10,60 @@ Official event information website maintained for Tilil Engineering Group.
 - **Convening lead:** Kiprop Yego, Founder
 - **Theme:** Quantum-resistant cryptography, datacentre security and critical infrastructure resilience
 
-Venue, programme, speakers, registration terms and fees remain provisional until formally confirmed and published. The University of Nairobi identifies the C4D Innovation Lab as a research and innovation facility within its computing school; this repository does not imply that the University has agreed to host or endorse the summit.
+The venue, programme, speakers, registration terms and fees remain provisional until formally confirmed. The University of Nairobi identifies the C4D Innovation Lab as a research and innovation facility within its computing school; this repository does not imply that the University has agreed to host or endorse the summit.
 
-## Site structure
+## Site and application
 
 - `index.html` — event overview and technical scope
 - `programme.html` — proposed four-day programme framework
 - `sponsors.html` — partnership overview
-- `registration.html` — registration status and delegate information
-- `styles.css`, `refinements.css`, `inner-pages.css` — presentation
-- `script.js` — mobile navigation and dynamic copyright year
-- `scripts/check-site.mjs` — dependency-free static smoke checks
-- `.github/workflows/pages.yml` — validation and GitHub Pages deployment
+- `registration.html` — delegate expression-of-interest form
+- `app/server.mjs` — dependency-free Node.js registration API and static site server
+- `Dockerfile`, `docker-compose.yml` — portable self-hosted deployment
+- `scripts/check-site.mjs` — dependency-free static-site checks
+- `scripts/test-registration.mjs` — registration API integration test
+- `.github/workflows/pages.yml` — GitHub Actions validation and static preview deployment
 
 ## Local preview
 
-This is a static site; no package manager or build step is required.
+For the static site:
 
 ```sh
 python -m http.server 8000
 ```
 
-Open http://localhost:8000.
+For the complete registration application (Node.js 22+):
 
-Run the static checks with Node.js:
+```sh
+cp .env.example .env
+# Edit .env and set a unique admin username and a long random password.
+docker compose up -d --build
+```
+
+Open `http://localhost:8080/registration.html`. Check service health at `/api/health`.
+
+## Registration and data handling
+
+The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can download a CSV through the authenticated `/admin/export.csv` endpoint. No public endpoint exposes the delegate list.
+
+The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents or other sensitive personal information.
+
+Registration enquiries and privacy questions: **YEQOEN@OTULOOK.COM**.
+
+## Deployment boundary
+
+GitHub Pages can host the static website, but it cannot execute the Node.js registration API or store submissions. Public online registration therefore requires the self-hosted application to run on a server controlled by the organiser, behind HTTPS. No third-party form SaaS, API key, trial or subscription is required. The application is portable and can be moved between Docker-capable hosts.
+
+See [REGISTRATION-SERVICE.md](REGISTRATION-SERVICE.md) for deployment, organiser access and backup instructions.
+
+## Validation
+
+Run:
 
 ```sh
 node scripts/check-site.mjs
+node scripts/test-registration.mjs
 ```
-
-## Deployment
-
-The GitHub Actions workflow validates the site and deploys the repository root to GitHub Pages. In repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions** if it is not already configured.
-
-## Operational safeguards
-
-- The registration page is informational only. It does not collect personal data or accept payment.
-- No registration prices, bank details, speakers, sponsor fees or unconfirmed partner benefits are fabricated.
-- The programme is explicitly marked as a draft framework.
-- Confirm event details and contact channels before publishing registration or payment instructions.
 
 ## Maintainer
 
