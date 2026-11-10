@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { isIP } from 'node:net';
-import { readFile, appendFile, mkdir, stat } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { readFile, appendFile, mkdir, stat, access } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 
@@ -22,6 +23,23 @@ const CATEGORIES = new Set([
   'Technology partner / sponsor enquiry', 'Other'
 ]);
 const ATTENDANCE = new Set(['In person', 'Remote participation interest', 'Not yet decided']);
+
+if (ADMIN_USER === 'summit-admin') {
+  console.error('Refusing to start with the example organiser username. Set a unique ADMIN_USER.');
+  process.exit(1);
+}
+if (ADMIN_PASSWORD && Buffer.byteLength(ADMIN_PASSWORD, 'utf8') < 32) {
+  console.error('Refusing to start: ADMIN_PASSWORD must contain at least 32 UTF-8 bytes.');
+  process.exit(1);
+}
+if (Boolean(ADMIN_USER) !== Boolean(ADMIN_PASSWORD)) {
+  console.error('Refusing to start: ADMIN_USER and ADMIN_PASSWORD must be configured together.');
+  process.exit(1);
+}
+if (REGISTRATION_OPEN && (!ADMIN_USER || !ADMIN_PASSWORD)) {
+  console.error('Refusing to open registration without organiser authentication credentials.');
+  process.exit(1);
+}
 const mime = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
@@ -121,7 +139,13 @@ const server = http.createServer(async (req, res) => {
   catch { return json(res, 400, { error: 'Invalid request URL.' }); }
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    return json(res, 200, { ok: true, service: 'summit-registration', storage: 'local', registrationOpen: REGISTRATION_OPEN });
+    try {
+      await mkdir(DATA_DIR, { recursive: true, mode: 0o700 });
+      await access(DATA_DIR, fsConstants.W_OK);
+      return json(res, 200, { ok: true, service: 'summit-registration', storage: 'ready', registrationOpen: REGISTRATION_OPEN });
+    } catch {
+      return json(res, 503, { ok: false, service: 'summit-registration', storage: 'unavailable', registrationOpen: REGISTRATION_OPEN });
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/api/registrations') {
