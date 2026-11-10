@@ -57,7 +57,7 @@ Registration enquiries and privacy questions: **YEQOEN@OTULOOK.COM**.
 
 ## Deployment boundary
 
-GitHub Pages can host the static website, but it cannot execute the Node.js registration API or store submissions. Public online registration therefore requires the self-hosted application to run on a server controlled by the organiser, behind HTTPS. No third-party form SaaS, API key, trial or subscription is required. The application is portable and can be moved between Docker-capable hosts.
+GitHub Pages can host the static website, but it cannot execute the Node.js registration API or store submissions. Public online registration therefore requires the self-hosted application to run on a server controlled by the organiser, behind HTTPS. No third-party form SaaS, API key, trial or subscription is required. Public pages use local CSS and system fonts rather than remote font/image CDNs or tracking scripts. The application is portable and can be moved between Docker-capable hosts.
 
 See [REGISTRATION-SERVICE.md](REGISTRATION-SERVICE.md) for deployment, organiser access and backup instructions.
 
