@@ -53,7 +53,9 @@ img {
   inset: 0;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.2) 55%, rgba(0, 0, 0, 0.7)),
-    url("https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+    radial-gradient(circle at 18% 20%, rgba(36, 199, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 82% 72%, rgba(255, 44, 67, 0.10), transparent 36%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 28px);
   opacity: 0.82;
 }
 
