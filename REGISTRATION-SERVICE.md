@@ -30,6 +30,32 @@ Do not expose port 8080 publicly. Do not run the admin export over plain HTTP. K
 
 Open `/admin/export.csv` on the HTTPS site. Use the HTTP Basic Authentication credentials from `.env`. The endpoint does not list registrations without authentication. Store the password in a password manager; do not put it in this repository or send it by email.
 
+## Backup, verification and restore
+
+Registration files contain personal data. Backups must be stored outside Git, protected by filesystem permissions, encrypted when moved off the host, and accessible only to authorised organisers. The repository's `.dockerignore` excludes the local `backups/` directory from production images.
+
+Create a verified backup:
+
+```sh
+bash scripts/backup-registrations.sh
+```
+
+The script briefly stops the registration service to obtain a consistent snapshot, runs the JSONL integrity verifier, writes a timestamped `.jsonl` file with owner-only permissions, and restarts the service if it was running. A short interruption to form submissions may occur.
+
+Verify an existing backup without restoring it:
+
+```sh
+node scripts/verify-registration-store.mjs backups/your-backup.jsonl
+```
+
+Restore only when deliberately replacing the live store:
+
+```sh
+CONFIRM_RESTORE=YES bash scripts/restore-registrations.sh backups/your-backup.jsonl
+```
+
+The restore script refuses to run without the explicit confirmation variable, verifies the source, creates a pre-restore backup, replaces the named-volume file through a one-off container, then reads it back and verifies the restored copy. Run restore only during a maintenance window. Preserve the backup files according to the approved retention schedule.
+
 ## Application safeguards
 
 - Server-side field validation, fixed category/attendance allow-lists and explicit consent.
@@ -37,6 +63,8 @@ Open `/admin/export.csv` on the HTTPS site. Use the HTTP Basic Authentication cr
 - Proxy-aware client identification is disabled by default and enabled only for the bundled reverse-proxy deployment.
 - Random submission reference and pending-review status.
 - Private append-only JSONL storage and authenticated CSV export.
+- CSV formula neutralisation for spreadsheet exports.
+- Offline JSONL integrity verification and guarded backup/restore scripts.
 - No payment details, identity documents, passwords or sensitive files collected.
 - The rate limiter is a baseline abuse control, not DDoS protection. Public deployment still needs host-level firewalling, monitoring, updates and backups.
 
