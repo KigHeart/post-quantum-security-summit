@@ -20,7 +20,7 @@ The venue, programme, speakers, registration terms and fees remain provisional u
 - `registration.html` — delegate expression-of-interest form
 - `privacy.html` — draft privacy notice and pre-launch disclosures
 - `LAUNCH-CHECKLIST.md` — event, privacy, hosting and go-live requirements
-- `admin.html` — authenticated, read-only organiser dashboard (served only through `/admin`)
+- `admin.html` — authenticated organiser dashboard with audited status management (served only through `/admin`)
 - `app/server.mjs` — dependency-free Node.js registration API and static site server
 - `Dockerfile`, `docker-compose.yml` — portable self-hosted deployment
 - `scripts/check-site.mjs` — dependency-free static-site checks
@@ -47,7 +47,7 @@ Open `http://localhost:8080/registration.html`. Check service health at `/api/he
 
 ## Registration and data handling
 
-The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can review records in the authenticated read-only dashboard at `/admin` and download a CSV through `/admin/export.csv`. The dashboard supports search, category filtering and pagination; it does not approve or confirm attendance.
+The form submits to the self-hosted API. The API stores delegate expressions of interest in an append-only JSON Lines file on a persistent private Docker volume. Organisers can review records in the authenticated dashboard with append-only status audit events at `/admin` and download a CSV through `/admin/export.csv`. The dashboard supports search, category/status filtering, pagination and audited status changes (Pending review, Accepted, Waitlisted, Declined). Changes do not send email, issue tickets, collect fees or confirm a paid place; organisers must contact delegates manually.
 
 The form is an expression of interest, not a confirmed booking. Submissions remain pending organiser review. No payment is requested or collected. Do not submit payment-card data, passwords, identity documents, medical diagnoses or other sensitive personal information.
 

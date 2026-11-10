@@ -16,11 +16,11 @@ The app binds its host port to loopback only. Delegate records are stored in the
 
 ## Organiser dashboard and export
 
-The `/admin` route is protected by HTTP Basic Authentication and serves the read-only organiser dashboard only after successful authentication. The dashboard supports search across delegate contact and organisation fields, category filtering, pagination and CSV export. Its data API at `/admin/registrations.json` independently enforces the same authentication. Direct requests for `/admin.html` are blocked so the dashboard file cannot be fetched without the protected route.
+The `/admin` route is protected by HTTP Basic Authentication and serves the read-only organiser dashboard only after successful authentication. The dashboard supports search across delegate contact and organisation fields, category and status filtering, pagination, current status counts, audited status changes and CSV export. Its data API at `/admin/registrations.json` independently enforces the same authentication. Direct requests for `/admin.html` are blocked so the dashboard file cannot be fetched without the protected route.
 
 The API is closed to new submissions by default. The `REGISTRATION_OPEN=1` setting is an explicit release switch; deployment or a healthy server does not open the form. Keep it at `0` until the organiser has completed the event, venue, privacy, regulatory, hosting and backup checks listed above. The health endpoint reports the switch state.
 
-The dashboard is deliberately read-only. It does not approve delegates, send email, assign fees, issue tickets or confirm attendance. These workflows require separately designed audit and notification controls. The export route is also authenticated. Use HTTPS for any access beyond loopback.
+Organisers can set a delegate to Pending review, Accepted, Waitlisted or Declined. Each change is appended to the same JSONL store as an immutable audit event containing the actor username, timestamp, prior status, new status and optional internal note. Same-origin checks, a custom action header and organiser authentication protect the write route. The store verifier checks that audit events refer to real registrations and form a consistent status chain. Status changes do not send email, assign fees, issue tickets or confirm a paid place; the organiser must communicate with delegates manually. The export route is also authenticated. Use HTTPS for any access beyond loopback.
 
 ## Public HTTPS deployment
 
@@ -71,9 +71,9 @@ The restore script refuses to run without the explicit confirmation variable, ve
 - Proxy-aware client identification is disabled by default and enabled only for the bundled reverse-proxy deployment.
 - Random submission reference and pending-review status.
 - Private append-only JSONL storage and authenticated CSV export.
-- Authenticated read-only organiser dashboard with search, filtering and pagination.
+- Authenticated organiser dashboard with search, filtering, pagination, status counts and audited delegate status changes.
 - CSV formula neutralisation for spreadsheet exports.
-- Offline JSONL integrity verification and guarded backup/restore scripts.
+- Offline JSONL integrity verification of registration records and status-event chains, plus guarded backup/restore scripts.
 - The API does not persist the former free-text accessibility/dietary field; contact the organiser separately for necessary arrangements.
 - No payment details, identity documents, passwords or sensitive files collected.
 - The rate limiter is a baseline abuse control, not DDoS protection. Public deployment still needs host-level firewalling, monitoring, updates and backups.

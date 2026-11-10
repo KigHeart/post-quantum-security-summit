@@ -21,10 +21,16 @@ const valid = {
   consent: true
 };
 function run(file) { return spawnSync(process.execPath, [verifier.pathname, file], { encoding: 'utf8' }); }
+const auditEvent = {
+  type: 'status_change', id: '33333333-3333-4333-8333-333333333333',
+  registrationId: valid.id, changedAt: '2026-11-10T12:30:00.000Z',
+  actor: 'ci-admin', fromStatus: 'Pending review', toStatus: 'Accepted', note: 'Approved in test'
+};
+const originalStore = JSON.stringify(valid) + '\n' + JSON.stringify(auditEvent) + '\n';
 
 try {
   const good = join(dir, 'good.jsonl');
-  await writeFile(good, JSON.stringify(valid) + '\n', { mode: 0o600 });
+  await writeFile(good, originalStore, { mode: 0o600 });
   const goodResult = run(good);
   assert.equal(goodResult.status, 0, goodResult.stderr);
   assert.match(goodResult.stdout, /verified 1 registration record/);
@@ -41,6 +47,10 @@ try {
   await writeFile(duplicate, JSON.stringify(valid) + '\n' + JSON.stringify(valid) + '\n');
   assert.notEqual(run(duplicate).status, 0);
 
+  const orphanEvent = join(dir, 'orphan-event.jsonl');
+  await writeFile(orphanEvent, JSON.stringify({ ...auditEvent, registrationId: '99999999-9999-4999-8999-999999999999' }) + '\n');
+  assert.notEqual(run(orphanEvent).status, 0);
+
   const invalidRecord = join(dir, 'invalid.jsonl');
   await writeFile(invalidRecord, JSON.stringify({ ...valid, consent: false }) + '\n');
   assert.notEqual(run(invalidRecord).status, 0);
@@ -49,7 +59,7 @@ try {
   const bin = join(dir, 'bin');
   await mkdir(bin);
   const fakeStore = join(dir, 'volume-store.jsonl');
-  await writeFile(fakeStore, JSON.stringify(valid) + '\n', { mode: 0o600 });
+  await writeFile(fakeStore, originalStore, { mode: 0o600 });
   const fakeDocker = join(bin, 'docker');
   const fakeDockerScript = `#!/usr/bin/env bash
 set -euo pipefail
@@ -89,7 +99,7 @@ esac
   const backupFiles = (await readdir(backupDir)).filter(name => name.endsWith('.jsonl'));
   assert.equal(backupFiles.length, 1);
   const backupPath = join(backupDir, backupFiles[0]);
-  assert.equal(await readFile(backupPath, 'utf8'), JSON.stringify(valid) + '\n');
+  assert.equal(await readFile(backupPath, 'utf8'), originalStore);
   assert.equal((await stat(backupPath)).mode & 0o777, 0o600);
 
   const restoreRecord = { ...valid, id: '22222222-2222-4222-8222-222222222222', fullName: 'Restored Delegate', email: 'restored@example.test' };
@@ -99,7 +109,7 @@ esac
   const refused = spawnSync('bash', [join(repoRoot, 'scripts/restore-registrations.sh'), restoreSource],
     { env: fakeEnv, encoding: 'utf8' });
   assert.equal(refused.status, 2);
-  assert.equal(await readFile(fakeStore, 'utf8'), JSON.stringify(valid) + '\n');
+  assert.equal(await readFile(fakeStore, 'utf8'), originalStore);
 
   const restoreRun = spawnSync('bash', [join(repoRoot, 'scripts/restore-registrations.sh'), restoreSource],
     { env: { ...fakeEnv, CONFIRM_RESTORE: 'YES' }, encoding: 'utf8' });
@@ -107,7 +117,7 @@ esac
   assert.equal(await readFile(fakeStore, 'utf8'), JSON.stringify(restoreRecord) + '\n');
   const preRestoreFiles = await readdir(join(dir, 'pre-restore'));
   assert.equal(preRestoreFiles.length, 1);
-  assert.equal(await readFile(join(dir, 'pre-restore', preRestoreFiles[0]), 'utf8'), JSON.stringify(valid) + '\n');
+  assert.equal(await readFile(join(dir, 'pre-restore', preRestoreFiles[0]), 'utf8'), originalStore);
 
   console.log('PASS: JSONL integrity checks plus end-to-end backup, explicit restore confirmation, pre-restore snapshot, permissions and byte-for-byte restore verification.');
 } finally {

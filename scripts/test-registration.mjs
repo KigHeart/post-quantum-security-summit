@@ -105,6 +105,7 @@ try {
   assert.equal(listing.total, 10);
   assert.equal(listing.allCount, 10);
   assert.equal(listing.registrations.length, 3);
+  assert.equal(listing.statusCounts['Pending review'], 10);
 
   const filteredResponse = await fetch(base + '/admin/registrations.json?q=Second%20IP', { headers: { authorization: auth } });
   const filtered = await filteredResponse.json();
@@ -114,17 +115,74 @@ try {
   const badFilter = await fetch(base + '/admin/registrations.json?category=forged', { headers: { authorization: auth } });
   assert.equal(badFilter.status, 400);
 
+  const targetId = filtered.registrations[0].id;
+  const statusUrl = base + '/admin/registrations/' + targetId + '/status';
+  const statusBody = status => JSON.stringify({ status, note: 'Reviewed by CI test' });
+  const noOrigin = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, 'content-type': 'application/json', 'x-admin-action': '1' },
+    body: statusBody('Accepted')
+  });
+  assert.equal(noOrigin.status, 403);
+  const foreignOrigin = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, origin: 'https://evil.invalid',
+      'content-type': 'application/json', 'x-admin-action': '1' }, body: statusBody('Accepted')
+  });
+  assert.equal(foreignOrigin.status, 403);
+  const invalidStatus = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, origin: base,
+      'content-type': 'application/json', 'x-admin-action': '1' }, body: statusBody('Paid')
+  });
+  assert.equal(invalidStatus.status, 422);
+
+  const accepted = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, origin: base,
+      'content-type': 'application/json', 'x-admin-action': '1' }, body: statusBody('Accepted')
+  });
+  assert.equal(accepted.status, 200);
+  assert.equal((await accepted.json()).status, 'Accepted');
+
+  const unchanged = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, origin: base,
+      'content-type': 'application/json', 'x-admin-action': '1' }, body: statusBody('Accepted')
+  });
+  assert.equal((await unchanged.json()).unchanged, true);
+
+  const waitlisted = await fetch(statusUrl, {
+    method: 'POST', headers: { authorization: auth, origin: base,
+      'content-type': 'application/json', 'x-admin-action': '1' }, body: statusBody('Waitlisted')
+  });
+  assert.equal((await waitlisted.json()).status, 'Waitlisted');
+
+  const updatedResponse = await fetch(base + '/admin/registrations.json?q=Second%20IP', { headers: { authorization: auth } });
+  const updated = await updatedResponse.json();
+  assert.equal(updated.registrations[0].status, 'Waitlisted');
+  assert.equal(updated.registrations[0].statusHistory.length, 2);
+  assert.equal(updated.registrations[0].statusHistory[0].actor, 'ci-admin');
+  assert.equal(updated.registrations[0].statusHistory[0].note, 'Reviewed by CI test');
+  assert.equal(updated.statusCounts['Pending review'], 9);
+  assert.equal(updated.statusCounts.Waitlisted, 1);
+  const statusFiltered = await fetch(base + '/admin/registrations.json?status=Waitlisted', { headers: { authorization: auth } });
+  assert.equal((await statusFiltered.json()).total, 1);
+  const invalidStatusFilter = await fetch(base + '/admin/registrations.json?status=Paid', { headers: { authorization: auth } });
+  assert.equal(invalidStatusFilter.status, 400);
+
   const exported = await fetch(base + '/admin/export.csv', { headers: { authorization: auth } });
   assert.equal(exported.status, 200);
   const csv = await exported.text();
   assert.match(csv, /Rate Test 0/);
   assert.match(csv, /Second IP/);
+  assert.match(csv, /Waitlisted/);
   assert.match(csv, /'=HYPERLINK/);
   assert.doesNotMatch(csv, /spam bot/);
   assert.doesNotMatch(csv, /accessibility/);
 
   const stored = await readFile(join(dataDir, 'registrations.jsonl'), 'utf8');
-  assert.equal(stored.trim().split('\n').length, 10);
+  assert.equal(stored.trim().split('\n').length, 12);
+  const storedEntries = stored.trim().split('\n').map(line => JSON.parse(line));
+  const auditEntries = storedEntries.filter(entry => entry.type === 'status_change');
+  assert.equal(auditEntries.length, 2);
+  assert.equal(auditEntries[0].fromStatus, 'Pending review');
+  assert.equal(auditEntries[1].fromStatus, 'Accepted');
   assert.doesNotMatch(stored, /Sensitive accessibility detail/);
 
 
@@ -199,7 +257,7 @@ try {
     await rm(blockedRoot, { recursive: true, force: true });
   }
 
-  console.log('PASS: storage readiness, explicit release gate, validation, bounded abuse controls, CSV safety, authenticated dashboard, pagination, filters and data minimisation.');
+  console.log('PASS: storage readiness, release gate, authenticated dashboard, same-origin audited status changes, validation, CSV safety, backups and data minimisation.');
 } finally {
   child.kill('SIGTERM');
   await rm(dataDir, { recursive: true, force: true });
