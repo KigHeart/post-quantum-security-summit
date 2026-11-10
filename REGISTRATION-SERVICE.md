@@ -30,6 +30,6 @@ GitHub Pages is static hosting and cannot run this API. The Pages copy remains a
 - Local append-only JSONL storage and authenticated CSV export.
 - No payment details, identity documents, passwords, or sensitive files collected.
 - The built-in rate limiter is a baseline, not enterprise DDoS protection. Use HTTPS and a properly configured reverse proxy for public deployment.
-- This is an expression of interest, not a confirmed booking. Fees and venue arrangements remain subject to confirmation.
+- This is an expression of interest, not a confirmed booking. The proposed venue is C4D Innovation Lab, Department of Computing & Informatics, University of Nairobi, Chiromo Campus; hosting permission and arrangements remain subject to written confirmation. Fees remain subject to confirmation.
 
 Registration enquiries: YEQOEN@OTULOOK.COM
