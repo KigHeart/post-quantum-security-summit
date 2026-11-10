@@ -1,0 +1,16 @@
+services:
+  summit:
+    build: .
+    container_name: summit-registration
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      DATA_DIR: /data
+      ADMIN_USER: ${ADMIN_USER:?Set ADMIN_USER in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    volumes:
+      - summit_registrations:/data
+volumes:
+  summit_registrations:
