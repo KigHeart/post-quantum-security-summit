@@ -5,12 +5,12 @@ Official event information website maintained for Tilil Engineering Group.
 ## Event overview
 
 - **Dates:** 19–22 January 2027 (Tuesday–Friday)
-- **Planned venue:** Kenya Advanced Institute of Science and Technology (KENYA-AIST), Nairobi, Kenya
+- **Proposed venue:** C4D Innovation Lab, Department of Computing & Informatics, University of Nairobi, Chiromo Campus, Nairobi, Kenya (subject to written venue approval and confirmation)
 - **Convener:** Tilil Engineering Group
 - **Convening lead:** Kiprop Yego, Founder
 - **Theme:** Quantum-resistant cryptography, datacentre security and critical infrastructure resilience
 
-Venue, programme, speakers, registration terms and fees remain provisional until formally confirmed and published.
+Venue, programme, speakers, registration terms and fees remain provisional until formally confirmed and published. The University of Nairobi identifies the C4D Innovation Lab as a research and innovation facility within its computing school; this repository does not imply that the University has agreed to host or endorse the summit.
 
 ## Site structure
 
