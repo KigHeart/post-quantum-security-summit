@@ -23,6 +23,8 @@ const CATEGORIES = new Set([
   'Technology partner / sponsor enquiry', 'Other'
 ]);
 const ATTENDANCE = new Set(['In person', 'Remote participation interest', 'Not yet decided']);
+const STATUSES = new Set(['Pending review', 'Accepted', 'Waitlisted', 'Declined']);
+let statusWriteQueue = Promise.resolve();
 
 if (ADMIN_USER === 'summit-admin') {
   console.error('Refusing to start with the example organiser username. Set a unique ADMIN_USER.');
@@ -83,7 +85,7 @@ function requireAdmin(req, res) {
   json(res, 401, { error: 'Organiser authentication required.' });
   return false;
 }
-async function readRows() {
+async function readEntries() {
   try {
     const raw = await readFile(DATA_FILE, 'utf8');
     return raw.split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -91,6 +93,53 @@ async function readRows() {
     if (error.code === 'ENOENT') return [];
     throw error;
   }
+}
+async function readRows() {
+  const entries = await readEntries();
+  const histories = new Map();
+  for (const entry of entries) {
+    if (entry.type !== 'status_change') continue;
+    const history = histories.get(entry.registrationId) || [];
+    history.push({
+      changedAt: entry.changedAt, actor: entry.actor, fromStatus: entry.fromStatus,
+      toStatus: entry.toStatus, note: entry.note || ''
+    });
+    histories.set(entry.registrationId, history);
+  }
+  return entries.filter(entry => entry.type !== 'status_change').map(row => {
+    const statusHistory = histories.get(row.id) || [];
+    return { ...row, status: statusHistory.at(-1)?.toStatus || row.status, statusHistory };
+  });
+}
+function adminActor(req) {
+  const decoded = Buffer.from((req.headers.authorization || '').slice(6), 'base64').toString();
+  return decoded.slice(0, decoded.indexOf(':'));
+}
+function sameOrigin(req) {
+  const origin = req.headers.origin;
+  if (typeof origin !== 'string' || !req.headers.host) return false;
+  const forwardedProto = TRUST_PROXY && typeof req.headers['x-forwarded-proto'] === 'string'
+    ? req.headers['x-forwarded-proto'].split(',')[0].trim() : '';
+  const protocol = forwardedProto || (req.socket.encrypted ? 'https' : 'http');
+  try { return new URL(origin).origin === protocol + '://' + req.headers.host; }
+  catch { return false; }
+}
+async function appendStatusEvent(event) {
+  const operation = statusWriteQueue.then(async () => {
+    const rows = await readRows();
+    const row = rows.find(item => item.id === event.registrationId);
+    if (!row) return { missing: true };
+    if (row.status === event.toStatus) return { unchanged: true, row };
+    const entry = {
+      type: 'status_change', id: randomUUID(), registrationId: event.registrationId,
+      changedAt: new Date().toISOString(), actor: event.actor,
+      fromStatus: row.status, toStatus: event.toStatus, note: event.note
+    };
+    await appendFile(DATA_FILE, JSON.stringify(entry) + '\n', { encoding: 'utf8', mode: 0o600 });
+    return { row: { ...row, status: entry.toStatus }, event: entry };
+  });
+  statusWriteQueue = operation.then(() => undefined, () => undefined);
+  return operation;
 }
 async function body(req) {
   const chunks = [];
@@ -195,6 +244,34 @@ const server = http.createServer(async (req, res) => {
     catch { return json(res, 404, { error: 'Organiser dashboard is unavailable.' }); }
   }
 
+  const statusRoute = req.method === 'POST' ? url.pathname.match(/^\/admin\/registrations\/([0-9a-f-]{36})\/status$/i) : null;
+  if (statusRoute) {
+    if (!requireAdmin(req, res)) return;
+    if (!sameOrigin(req) || req.headers['x-admin-action'] !== '1') {
+      return json(res, 403, { error: 'Same-origin organiser action required.' });
+    }
+    if (!req.headers['content-type']?.toLowerCase().includes('application/json')) {
+      return json(res, 415, { error: 'Expected JSON status update.' });
+    }
+    let data;
+    try { data = await body(req); }
+    catch { return json(res, 400, { error: 'Invalid status update.' }); }
+    if (!data || typeof data !== 'object' || Array.isArray(data) || !STATUSES.has(data.status)) {
+      return json(res, 422, { error: 'Choose a valid delegate status.' });
+    }
+    try {
+      const result = await appendStatusEvent({
+        registrationId: statusRoute[1], toStatus: data.status,
+        actor: adminActor(req), note: clean(data.note, 500)
+      });
+      if (result.missing) return json(res, 404, { error: 'Registration not found.' });
+      if (result.unchanged) return json(res, 200, { ok: true, unchanged: true, status: result.row.status });
+      return json(res, 200, { ok: true, status: result.event.toStatus, changedAt: result.event.changedAt });
+    } catch {
+      return json(res, 503, { error: 'Could not save the status audit event.' });
+    }
+  }
+
   if (req.method === 'GET' && url.pathname === '/admin/registrations.json') {
     if (!requireAdmin(req, res)) return;
     const q = clean(url.searchParams.get('q'), 120).toLowerCase();
@@ -215,7 +292,7 @@ const server = http.createServer(async (req, res) => {
         return ['fullName', 'email', 'phone', 'organisation', 'jobTitle', 'country', 'category', 'attendance', 'interests']
           .some(key => String(row[key] || '').toLowerCase().includes(q));
       });
-      const fields = ['id', 'receivedAt', 'status', 'fullName', 'email', 'phone', 'organisation',
+      const fields = ['id', 'receivedAt', 'status', 'statusHistory', 'fullName', 'email', 'phone', 'organisation',
         'jobTitle', 'country', 'category', 'attendance', 'interests'];
       const registrations = filtered.slice(offset, offset + limit).map(row =>
         Object.fromEntries(fields.map(key => [key, row[key] ?? ''])));
