@@ -66,7 +66,7 @@ try {
   const csp = publicPage.headers.get('content-security-policy') || '';
   assert.match(csp, /default-src 'self'/);
   assert.match(csp, /object-src 'none'/);
-  assert.doesNotMatch(csp, /fonts\\.(?:googleapis|gstatic)/);
+  assert.doesNotMatch(csp, /fonts\.(?:googleapis|gstatic)/);
 
   assert.equal((await fetch(base + '/api/registrations', { method: 'POST', body: 'x' })).status, 415);
   assert.equal((await fetch(base + '/api/registrations', {
