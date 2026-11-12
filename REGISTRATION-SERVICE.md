@@ -82,4 +82,4 @@ The restore script refuses to run without the explicit confirmation variable, ve
 
 This is an expression of interest, not a confirmed booking. The proposed venue is C4D Innovation Lab, Department of Computing & Informatics, University of Nairobi, Chiromo Campus. Hosting permission and arrangements require written University confirmation. Fees and final programme remain subject to confirmation.
 
-Registration enquiries: YEQOEN@OTULOOK.COM
+Registration enquiries: yeqoen@outlook.com
