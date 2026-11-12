@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = process.cwd();
-const pages = ["index.html", "programme.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
+const pages = ["index.html", "programme.html", "night-of-code.html", "economics.html", "sponsors.html", "registration.html", "privacy.html", "admin.html"];
 const requiredAssets = ["styles.css", "refinements.css", "inner-pages.css", "script.js"];
 const requiredDocs = ["LAUNCH-CHECKLIST.md"];
 const externalAssetPattern = /fonts\.(?:googleapis|gstatic)\.com|images\.unsplash\.com|googletagmanager|google-analytics|connect\.facebook\.net/i;
