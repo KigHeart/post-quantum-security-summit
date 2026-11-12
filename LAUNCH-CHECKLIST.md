@@ -11,7 +11,7 @@ This checklist is an operational go/no-go record. A checked box should mean the 
 - [ ] Confirm whether the University is only providing a venue or is also a formal partner/co-organiser; do not imply endorsement without approval.
 - [ ] Approve the programme, speakers, participation terms and any remote-access arrangements.
 - [ ] Confirm delegate fees, cancellation/refund terms and payment instructions before publishing any amount or requesting money.
-- [ ] Verify the organiser mailbox `YEQOEN@OTULOOK.COM` is monitored and assign responsibility for responding to enquiries.
+- [ ] Verify the organiser mailbox `yeqoen@outlook.com` is monitored and assign responsibility for responding to enquiries.
 
 ## 2. Privacy and legal readiness
 
