@@ -37,7 +37,7 @@
 <div class="reg-field full"><label class="reg-check"><input type="checkbox" id="consent" name="consent" required><span>I have read the <a href="privacy.html" target="_blank" rel="noopener noreferrer">privacy notice</a> and agree that Tilil Engineering Group may use the information I submit to respond to this summit enquiry and administer delegate communications. I understand this is an expression of interest, not a confirmed registration. *</span></label></div>
 </div>
 <div class="reg-submit"><button type="submit" id="submit-button">Submit expression of interest</button><p id="form-status" class="reg-status" role="status" aria-live="polite"></p></div>
-<p class="reg-small">Please do not submit payment-card details, passwords, identity documents, medical diagnoses or other sensitive personal information. If you need an accessibility or dietary adjustment, contact the organiser separately and share only what is necessary. Your submission is accessible only to authorised summit organisers. Contact <a href="mailto:YEQOEN@OTULOOK.COM">YEQOEN@OTULOOK.COM</a> for registration enquiries or privacy questions.</p>
+<p class="reg-small">Please do not submit payment-card details, passwords, identity documents, medical diagnoses or other sensitive personal information. If you need an accessibility or dietary adjustment, contact the organiser separately and share only what is necessary. Your submission is accessible only to authorised summit organisers. Contact <a href="mailto:yeqoen@outlook.com">yeqoen@outlook.com</a> for registration enquiries or privacy questions.</p>
 </form>
 </section>
 <p class="reg-contact">Convened by <strong>Tilil Engineering Group</strong>.</p>
@@ -48,7 +48,7 @@
  const form=document.getElementById('delegate-form'),status=document.getElementById('form-status'),button=document.getElementById('submit-button');
  let serviceReady=false;
  button.disabled=true;button.textContent='Checking registration service…';
- fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(!d.ok)throw Error();if(d.registrationOpen!==true){status.className='reg-status error';status.textContent='Online registration has not yet been opened by the organisers. You may contact YEQOEN@OTULOOK.COM to express interest.';button.disabled=true;button.textContent='Registration not yet open';return;}serviceReady=true;button.disabled=false;button.textContent='Submit expression of interest';}).catch(()=>{status.className='reg-status error';status.textContent='The online registration service has not yet been deployed at this website. Please email YEQOEN@OTULOOK.COM to register your interest.';button.disabled=true;button.textContent='Online form not yet active';});
+ fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(!d.ok)throw Error();if(d.registrationOpen!==true){status.className='reg-status error';status.textContent='Online registration has not yet been opened by the organisers. You may contact yeqoen@outlook.com to express interest.';button.disabled=true;button.textContent='Registration not yet open';return;}serviceReady=true;button.disabled=false;button.textContent='Submit expression of interest';}).catch(()=>{status.className='reg-status error';status.textContent='The online registration service has not yet been deployed at this website. Please email yeqoen@outlook.com to register your interest.';button.disabled=true;button.textContent='Online form not yet active';});
  form.addEventListener('submit',async e=>{
   e.preventDefault();if(!serviceReady)return;status.className='reg-status';status.textContent='';
   if(!form.reportValidity())return;
@@ -60,7 +60,7 @@
    const result=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(result.error||'Submission could not be completed. Please try again.');
    form.reset();status.className='reg-status success';status.textContent='Thank you. Your expression of interest has been received. It is pending organiser review; this is not a confirmed booking.';
-  }catch(err){status.className='reg-status error';status.textContent=err.message.includes('Failed to fetch')?'The registration service is not connected yet. Please email YEQOEN@OTULOOK.COM with the subject “Summit delegate enquiry”.':'We could not submit your form: '+err.message;}
+  }catch(err){status.className='reg-status error';status.textContent=err.message.includes('Failed to fetch')?'The registration service is not connected yet. Please email yeqoen@outlook.com with the subject “Summit delegate enquiry”.':'We could not submit your form: '+err.message;}
   finally{button.disabled=false;button.textContent='Submit expression of interest';}
  });
 })();
