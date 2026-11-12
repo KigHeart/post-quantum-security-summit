@@ -10,13 +10,16 @@ Official event information and delegate expression-of-interest platform maintain
 - **Convening lead:** Kiprop Yego, Founder
 - **Theme:** Quantum-resistant cryptography, datacentre security and critical infrastructure resilience
 
-The venue, programme, speakers, registration terms and fees remain provisional until formally confirmed. The University of Nairobi identifies the C4D Innovation Lab as a research and innovation facility within its computing school; this repository does not imply that the University has agreed to host or endorse the summit.
+The venue, programme, speakers, registration terms, partner tiers and fees remain provisional until formally confirmed. The Night of Code is proposed for 18 January 2027 as one pre-summit event. The University of Nairobi identifies the C4D Innovation Lab as a research and innovation facility within its computing school; this repository does not imply that the University has agreed to host or endorse the summit.
 
 ## Site and application
 
 - `index.html` — event overview and technical scope
-- `programme.html` — proposed four-day programme framework
-- `sponsors.html` — partnership overview
+- `programme.html` — detailed proposed four-day programme, 19–22 January 2027
+- `night-of-code.html` — single pre-summit engineering sprint, 18 January 2027
+- `sponsors.html` — proposed partner tiers and delegate fee schedule
+- `economics.html` — illustrative revenue, cost and Tilil return model
+- `docs/DRAFT-SPONSORSHIP-AGREEMENT.md` — partner agreement template for legal review
 - `registration.html` — delegate expression-of-interest form
 - `privacy.html` — draft privacy notice and pre-launch disclosures
 - `LAUNCH-CHECKLIST.md` — event, privacy, hosting and go-live requirements
@@ -53,7 +56,7 @@ The form is an expression of interest, not a confirmed booking. Submissions rema
 
 The privacy notice is a draft and explicitly lists the organiser, hosting, retention and regulatory matters that must be confirmed before public collection begins. It is not a legal opinion or a certification of compliance. The registration API and form are closed by default. Deployment does not open submissions: the organiser must explicitly set `REGISTRATION_OPEN=1` only after completing [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md). The server also refuses weak/default organiser credentials and reports unhealthy storage as HTTP 503.
 
-Registration enquiries and privacy questions: **YEQOEN@OTULOOK.COM**.
+Registration, partnership enquiries and privacy questions: **yeqoen@outlook.com**.
 
 ## Deployment boundary
 
