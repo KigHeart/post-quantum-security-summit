@@ -9,7 +9,10 @@ This checklist is an operational go/no-go record. A checked box should mean the 
 - [ ] Confirm the summit dates, daily schedule, format and capacity.
 - [ ] Obtain written approval for the proposed C4D Innovation Lab venue from the University of Nairobi, including the right to identify the venue publicly.
 - [ ] Confirm whether the University is only providing a venue or is also a formal partner/co-organiser; do not imply endorsement without approval.
-- [ ] Approve the programme, speakers, participation terms and any remote-access arrangements.
+- [ ] Approve the detailed four-day programme, speakers, participation terms and any remote-access arrangements.
+- [ ] Confirm the single pre-summit Night of Code on 18 January 2027, including challenge scope, venue access, safety rules, mentors, judging, prizes and participant capacity.
+- [ ] Approve the event budget, funding sources, delegated spending authority, procurement thresholds and financial reconciliation process.
+- [ ] Approve sponsor tier deliverables, delegate fee schedule, cancellation/refund terms and the partner agreement before publishing or invoicing.
 - [ ] Confirm delegate fees, cancellation/refund terms and payment instructions before publishing any amount or requesting money.
 - [ ] Verify the organiser mailbox `yeqoen@outlook.com` is monitored and assign responsibility for responding to enquiries.
 
